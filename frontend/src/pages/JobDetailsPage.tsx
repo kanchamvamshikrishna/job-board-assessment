@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { fetchJob } from "@/lib/api";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { deleteJob, fetchJob } from "@/lib/api";
 import { Job, JOB_TYPE_LABELS } from "@/types/job";
 import NotFoundPage from "./NotFoundPage";
 
 export default function JobDetailsPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -40,11 +44,68 @@ export default function JobDetailsPage() {
     return <NotFoundPage />;
   }
 
+  async function handleDelete() {
+    if (!id) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteJob(id);
+      navigate("/");
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete job");
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/" className="text-sm text-brand-600 hover:underline">
-        &larr; Back to all jobs
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link to="/" className="text-sm text-brand-600 hover:underline">
+          &larr; Back to all jobs
+        </Link>
+
+        {!confirmingDelete ? (
+          <div className="flex gap-2">
+            <Link
+              to={`/jobs/${job.id}/edit`}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Edit
+            </Link>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Delete
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-1.5">
+            <span className="text-sm text-red-700">Delete this listing?</span>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="rounded-md bg-red-600 px-3 py-1 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {deleting ? "Deleting..." : "Yes, delete"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={deleting}
+              className="rounded-md px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {deleteError && (
+        <p className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-700">{deleteError}</p>
+      )}
 
       <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6">
         <div className="flex items-start justify-between">

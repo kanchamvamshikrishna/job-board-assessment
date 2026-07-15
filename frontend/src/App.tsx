@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import HomePage from "@/pages/HomePage";
 import JobDetailsPage from "@/pages/JobDetailsPage";
 import PostJobPage from "@/pages/PostJobPage";
+import EditJobPage from "@/pages/EditJobPage";
 import BulkUploadPage from "@/pages/BulkUploadPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/jobs/new" element={<PostJobPage />} />
           <Route path="/jobs/bulk-upload" element={<BulkUploadPage />} />
+          <Route path="/jobs/:id/edit" element={<EditJobPage />} />
           <Route path="/jobs/:id" element={<JobDetailsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
