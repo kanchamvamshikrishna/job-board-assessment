@@ -13,6 +13,7 @@ export default function HomePage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(
     (routerLocation.state as { message?: string } | null)?.message ?? null,
   );
@@ -20,6 +21,13 @@ export default function HomePage() {
   const keyword = searchParams.get("keyword") ?? undefined;
   const location = searchParams.get("location") ?? undefined;
   const type = searchParams.get("type") ?? undefined;
+  const hasActiveFilters = Boolean(keyword || location || type);
+
+  useEffect(() => {
+    fetchJobs()
+      .then((data) => setTotalCount(data.length))
+      .catch(() => setTotalCount(null));
+  }, []);
 
   useEffect(() => {
     if (!successMessage) return;
@@ -65,6 +73,14 @@ export default function HomePage() {
         </p>
       </div>
       <SearchBar />
+
+      {!loading && !error && (
+        <p className="mt-4 text-sm text-gray-500">
+          {hasActiveFilters
+            ? `Showing ${jobs.length} of ${totalCount ?? "…"} job${totalCount === 1 ? "" : "s"} matching your search`
+            : `${totalCount ?? jobs.length} job${(totalCount ?? jobs.length) === 1 ? "" : "s"} available`}
+        </p>
+      )}
 
       {loading && (
         <div className="mt-6 grid gap-4">
