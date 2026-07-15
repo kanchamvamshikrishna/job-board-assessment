@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import JobForm from "@/components/JobForm";
 import { createJob } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
 import { JobFormValues, JobType } from "@/types/job";
 
 const emptyForm: JobFormValues = {
@@ -14,9 +15,11 @@ const emptyForm: JobFormValues = {
 
 export default function PostJobPage() {
   const navigate = useNavigate();
+  const { token } = useAuth();
 
   async function handleSubmit(values: JobFormValues) {
-    const job = await createJob(values);
+    if (!token) return;
+    const job = await createJob(values, token);
     navigate(`/jobs/${job.id}`);
   }
 

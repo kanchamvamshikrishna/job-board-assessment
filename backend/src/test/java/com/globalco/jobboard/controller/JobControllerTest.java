@@ -9,6 +9,7 @@ import com.globalco.jobboard.model.JobType;
 import com.globalco.jobboard.service.JobService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -23,7 +24,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+// Security is covered separately in JobControllerSecurityTest; these tests
+// exercise controller/service wiring without needing a JWT on every request.
 @WebMvcTest(JobController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class JobControllerTest {
 
     @Autowired

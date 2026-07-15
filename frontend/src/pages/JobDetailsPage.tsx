@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ApiError, deleteJob, fetchJob } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
 import { Job, JOB_TYPE_LABELS } from "@/types/job";
 import JobDetailSkeleton from "@/components/JobDetailSkeleton";
 import NotFoundPage from "./NotFoundPage";
@@ -9,6 +10,7 @@ export default function JobDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { token, isAuthenticated } = useAuth();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -86,11 +88,11 @@ export default function JobDetailsPage() {
   }
 
   async function handleDelete() {
-    if (!id) return;
+    if (!id || !token) return;
     setDeleting(true);
     setDeleteError(null);
     try {
-      await deleteJob(id);
+      await deleteJob(id, token);
       navigate("/", { state: { message: "Job deleted successfully." } });
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Failed to delete job");
@@ -111,7 +113,7 @@ export default function JobDetailsPage() {
           &larr; Back to all jobs
         </Link>
 
-        {!confirmingDelete ? (
+        {!isAuthenticated ? null : !confirmingDelete ? (
           <div className="flex gap-2">
             <Link
               to={`/jobs/${job.id}/edit`}

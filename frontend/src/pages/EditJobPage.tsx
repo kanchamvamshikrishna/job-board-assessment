@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import JobForm from "@/components/JobForm";
 import JobDetailSkeleton from "@/components/JobDetailSkeleton";
 import { ApiError, fetchJob, updateJob } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
 import { Job, JobFormValues } from "@/types/job";
 import NotFoundPage from "./NotFoundPage";
 
@@ -20,6 +21,7 @@ function toFormValues(job: Job): JobFormValues {
 export default function EditJobPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -58,8 +60,8 @@ export default function EditJobPage() {
   useEffect(() => loadJob(), [loadJob]);
 
   async function handleSubmit(values: JobFormValues) {
-    if (!id) return;
-    await updateJob(id, values);
+    if (!id || !token) return;
+    await updateJob(id, values, token);
     navigate(`/jobs/${id}`, { state: { message: "Job updated successfully." } });
   }
 

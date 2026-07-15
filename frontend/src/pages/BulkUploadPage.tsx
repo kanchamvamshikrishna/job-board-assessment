@@ -1,6 +1,7 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError, BulkUploadResult, bulkUploadJobs } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
 
 const SAMPLE_CSV = `title,company,location,type,description,salaryRange
 Senior Backend Engineer,Globalco,Hyderabad,FULL_TIME,Design and build REST APIs for the job board platform.,18-25 LPA
@@ -18,6 +19,7 @@ function downloadSampleCsv() {
 }
 
 export default function BulkUploadPage() {
+  const { token } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -31,14 +33,14 @@ export default function BulkUploadPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!file) return;
+    if (!file || !token) return;
 
     setSubmitting(true);
     setApiError(null);
     setResult(null);
 
     try {
-      const uploadResult = await bulkUploadJobs(file);
+      const uploadResult = await bulkUploadJobs(file, token);
       setResult(uploadResult);
     } catch (err) {
       setApiError(err instanceof ApiError ? err.message : "Failed to upload jobs");

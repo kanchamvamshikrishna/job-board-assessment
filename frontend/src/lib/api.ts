@@ -48,26 +48,33 @@ export async function fetchJob(id: string | number): Promise<Job> {
   return handleResponse<Job>(res);
 }
 
-export async function createJob(values: JobFormValues): Promise<Job> {
+export async function createJob(values: JobFormValues, token: string): Promise<Job> {
   const res = await fetch(`${API_BASE_URL}/api/jobs`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(values),
   });
   return handleResponse<Job>(res);
 }
 
-export async function updateJob(id: string | number, values: JobFormValues): Promise<Job> {
+export async function updateJob(
+  id: string | number,
+  values: JobFormValues,
+  token: string,
+): Promise<Job> {
   const res = await fetch(`${API_BASE_URL}/api/jobs/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(values),
   });
   return handleResponse<Job>(res);
 }
 
-export async function deleteJob(id: string | number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/jobs/${id}`, { method: "DELETE" });
+export async function deleteJob(id: string | number, token: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/jobs/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return handleResponse<void>(res);
 }
 
@@ -82,13 +89,37 @@ export interface BulkUploadResult {
   errors: BulkUploadRowError[];
 }
 
-export async function bulkUploadJobs(file: File): Promise<BulkUploadResult> {
+export async function bulkUploadJobs(file: File, token: string): Promise<BulkUploadResult> {
   const formData = new FormData();
   formData.append("file", file);
 
   const res = await fetch(`${API_BASE_URL}/api/jobs/bulk-upload`, {
     method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
   return handleResponse<BulkUploadResult>(res);
+}
+
+export interface AuthResponse {
+  token: string;
+  email: string;
+}
+
+export async function register(email: string, password: string): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  return handleResponse<AuthResponse>(res);
+}
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  return handleResponse<AuthResponse>(res);
 }
