@@ -3,7 +3,6 @@ package com.globalco.jobboard.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.globalco.jobboard.dto.AuthRequest;
 import com.globalco.jobboard.dto.AuthResponse;
-import com.globalco.jobboard.exception.EmailAlreadyInUseException;
 import com.globalco.jobboard.exception.InvalidCredentialsException;
 import com.globalco.jobboard.service.AuthService;
 import org.junit.jupiter.api.Test;
@@ -35,50 +34,15 @@ class AuthControllerTest {
 
     private AuthRequest sampleRequest() {
         AuthRequest request = new AuthRequest();
-        request.setEmail("test@example.com");
-        request.setPassword("password123");
+        request.setEmail("kancham@gmail.com");
+        request.setPassword("kancham@gmail.com");
         return request;
-    }
-
-    @Test
-    void register_returns201_withToken() throws Exception {
-        when(authService.register(any(AuthRequest.class)))
-                .thenReturn(new AuthResponse("jwt-token", "test@example.com"));
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sampleRequest())))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").value("jwt-token"))
-                .andExpect(jsonPath("$.email").value("test@example.com"));
-    }
-
-    @Test
-    void register_returns409_whenEmailTaken() throws Exception {
-        when(authService.register(any(AuthRequest.class)))
-                .thenThrow(new EmailAlreadyInUseException("test@example.com"));
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sampleRequest())))
-                .andExpect(status().isConflict());
-    }
-
-    @Test
-    void register_returns400_whenPasswordTooShort() throws Exception {
-        AuthRequest request = sampleRequest();
-        request.setPassword("short");
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
     }
 
     @Test
     void login_returns200_withToken() throws Exception {
         when(authService.login(any(AuthRequest.class)))
-                .thenReturn(new AuthResponse("jwt-token", "test@example.com"));
+                .thenReturn(new AuthResponse("jwt-token", "kancham@gmail.com"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

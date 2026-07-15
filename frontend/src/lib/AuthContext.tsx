@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { login as apiLogin, register as apiRegister } from "@/lib/api";
+import { login as apiLogin } from "@/lib/api";
 
 const STORAGE_KEY = "jobboard_auth";
 
@@ -13,7 +13,6 @@ interface AuthContextValue {
   email: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -44,11 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuth({ token: response.token, email: response.email });
   }
 
-  async function register(email: string, password: string) {
-    const response = await apiRegister(email, password);
-    setAuth({ token: response.token, email: response.email });
-  }
-
   function logout() {
     setAuth(null);
   }
@@ -58,7 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: auth?.email ?? null,
     isAuthenticated: auth !== null,
     login,
-    register,
     logout,
   };
 

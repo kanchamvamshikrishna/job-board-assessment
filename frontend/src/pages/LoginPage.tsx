@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { ApiError } from "@/lib/api";
 
@@ -31,7 +31,7 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold text-gray-900">Log in</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Admin log in</h1>
       <p className="mt-1 text-sm text-gray-500">Log in to post, edit, or delete job listings.</p>
 
       {error && (
@@ -71,13 +71,6 @@ export default function LoginPage() {
           {submitting ? "Logging in..." : "Log In"}
         </button>
       </form>
-
-      <p className="mt-4 text-sm text-gray-500">
-        Don&apos;t have an account?{" "}
-        <Link to="/register" className="text-brand-600 hover:underline">
-          Register
-        </Link>
-      </p>
     </div>
   );
 }

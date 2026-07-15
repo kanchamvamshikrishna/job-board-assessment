@@ -2,7 +2,6 @@ package com.globalco.jobboard.service;
 
 import com.globalco.jobboard.dto.AuthRequest;
 import com.globalco.jobboard.dto.AuthResponse;
-import com.globalco.jobboard.exception.EmailAlreadyInUseException;
 import com.globalco.jobboard.exception.InvalidCredentialsException;
 import com.globalco.jobboard.model.User;
 import com.globalco.jobboard.repository.UserRepository;
@@ -18,8 +17,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,41 +44,22 @@ class AuthServiceTest {
     }
 
     @Test
-    void register_createsUser_andReturnsToken() {
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        AuthResponse response = authService.register(request("Test@Example.com", "password123"));
-
-        assertThat(response.getEmail()).isEqualTo("test@example.com");
-        assertThat(response.getToken()).isNotBlank();
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    void register_throwsConflict_whenEmailAlreadyUsed() {
-        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
-
-        assertThatThrownBy(() -> authService.register(request("test@example.com", "password123")))
-                .isInstanceOf(EmailAlreadyInUseException.class);
-    }
-
-    @Test
     void login_returnsToken_whenCredentialsValid() {
-        User user = new User("test@example.com", passwordEncoder.encode("password123"));
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        User user = new User("kancham@gmail.com", passwordEncoder.encode("kancham@gmail.com"));
+        when(userRepository.findByEmail("kancham@gmail.com")).thenReturn(Optional.of(user));
 
-        AuthResponse response = authService.login(request("test@example.com", "password123"));
+        AuthResponse response = authService.login(request("kancham@gmail.com", "kancham@gmail.com"));
 
         assertThat(response.getToken()).isNotBlank();
+        assertThat(response.getEmail()).isEqualTo("kancham@gmail.com");
     }
 
     @Test
     void login_throwsInvalidCredentials_whenPasswordWrong() {
-        User user = new User("test@example.com", passwordEncoder.encode("password123"));
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        User user = new User("kancham@gmail.com", passwordEncoder.encode("kancham@gmail.com"));
+        when(userRepository.findByEmail("kancham@gmail.com")).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> authService.login(request("test@example.com", "wrongpassword")))
+        assertThatThrownBy(() -> authService.login(request("kancham@gmail.com", "wrongpassword")))
                 .isInstanceOf(InvalidCredentialsException.class);
     }
 

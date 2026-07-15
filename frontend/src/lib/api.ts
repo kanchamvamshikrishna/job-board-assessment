@@ -106,15 +106,6 @@ export interface AuthResponse {
   email: string;
 }
 
-export async function register(email: string, password: string): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-  return handleResponse<AuthResponse>(res);
-}
-
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: "POST",

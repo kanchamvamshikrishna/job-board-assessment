@@ -4,13 +4,14 @@ import com.globalco.jobboard.dto.AuthRequest;
 import com.globalco.jobboard.dto.AuthResponse;
 import com.globalco.jobboard.service.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// No public registration - there is exactly one authorized account,
+// seeded by AdminUserSeeder. This just authenticates it.
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -19,11 +20,6 @@ public class AuthController {
 
     public AuthController(AuthService authService) {
         this.authService = authService;
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
     @PostMapping("/login")

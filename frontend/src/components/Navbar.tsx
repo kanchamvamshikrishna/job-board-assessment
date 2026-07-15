@@ -49,9 +49,6 @@ export default function Navbar() {
               <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-brand-600">
                 Log In
               </Link>
-              <Link to="/register" className="text-sm font-medium text-gray-600 hover:text-brand-600">
-                Register
-              </Link>
             </div>
           )}
         </nav>
