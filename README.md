@@ -2,6 +2,13 @@
 
 A full-stack job board application: post job listings, browse and search them by keyword, location, and job type.
 
+## Live Demo
+
+- **App**: https://frontend-dusky-gamma-93.vercel.app
+- **API**: https://jobboard-api-production-f3ba.up.railway.app/api/jobs
+
+Frontend is deployed on Vercel via the GitHub Actions CI/CD pipeline (auto-deploys on push to `main`). Backend is deployed on Railway with a managed MySQL database.
+
 ## Architecture
 
 ```
@@ -13,7 +20,7 @@ job-board-assessment/
 
 ## Features
 
-- **Browse jobs** — paginated list of open positions, newest first.
+- **Browse jobs** — list of open positions, newest first.
 - **Search & filter** — full-text search across title/company/description, plus location and job-type filters.
 - **Job details** — dedicated page per listing with full description, salary range, and posted date.
 - **Post a job** — form-driven creation with client- and server-side validation.
@@ -115,4 +122,16 @@ Required GitHub Actions secrets for deployment:
 
 The frontend is a single-page app: `frontend/vercel.json` sets the build/output directory and rewrites all routes to `index.html` so client-side routes like `/jobs/5` resolve correctly on Vercel.
 
-The backend is a standard Spring Boot jar (`mvn package`) and can be deployed to any Java host (Render, Railway, Fly.io, etc.) with a MySQL add-on, using the same environment variables listed above.
+## Backend Deployment (Railway)
+
+The backend runs on [Railway](https://railway.app) as a `backend/Dockerfile` build (`maven:3.9-eclipse-temurin-17` build stage → `eclipse-temurin:17-jre-alpine` runtime), alongside a managed MySQL plugin. It's a standard Spring Boot jar and can be deployed to any Java host (Render, Fly.io, etc.) with a MySQL add-on the same way, using the environment variables listed above.
+
+To redeploy the backend after a change (Railway CLI, from the repo root):
+
+```bash
+railway up backend --path-as-root --service jobboard-api
+```
+
+`--path-as-root` matters — `railway up` uploads the whole repo by default, and this is a monorepo, so without it Railway can't tell the backend from the frontend.
+
+Environment variables on Railway reference the MySQL plugin directly (`DB_HOST=${{MySQL.MYSQLHOST}}`, etc.) so credentials never need to be typed in manually, plus `CORS_ALLOWED_ORIGINS` set to the Vercel production URL above.
