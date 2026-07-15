@@ -1,13 +1,16 @@
 package com.globalco.jobboard.controller;
 
+import com.globalco.jobboard.dto.BulkUploadResult;
 import com.globalco.jobboard.dto.JobRequest;
 import com.globalco.jobboard.model.Job;
 import com.globalco.jobboard.model.JobType;
 import com.globalco.jobboard.service.JobService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -48,5 +51,14 @@ public class JobController {
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
         jobService.deleteJob(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/bulk-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BulkUploadResult> bulkUpload(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Uploaded file is empty");
+        }
+        BulkUploadResult result = jobService.bulkUploadJobs(file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 }

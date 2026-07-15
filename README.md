@@ -7,7 +7,7 @@ A full-stack job board application: post job listings, browse and search them by
 ```
 job-board-assessment/
 ├── .github/workflows/ci-cd.yml   # CI: backend tests + frontend build, CD: Vercel deploy
-├── frontend/                     # Next.js 14 (App Router) + TypeScript + Tailwind CSS
+├── frontend/                     # React 18 + Vite + React Router + TypeScript + Tailwind CSS
 └── backend/                      # Spring Boot 3 REST API + MySQL
 ```
 
@@ -17,13 +17,14 @@ job-board-assessment/
 - **Search & filter** — full-text search across title/company/description, plus location and job-type filters.
 - **Job details** — dedicated page per listing with full description, salary range, and posted date.
 - **Post a job** — form-driven creation with client- and server-side validation.
-- **REST API** — `GET/POST /api/jobs`, `GET/PUT/DELETE /api/jobs/{id}`, backed by MySQL via Spring Data JPA.
+- **Bulk upload** — upload a CSV of multiple jobs at once; valid rows are created and invalid rows are reported back with the line number and reason, without failing the whole batch.
+- **REST API** — `GET/POST /api/jobs`, `GET/PUT/DELETE /api/jobs/{id}`, `POST /api/jobs/bulk-upload`, backed by MySQL via Spring Data JPA.
 
 ## Tech Stack
 
 | Layer    | Technology                                  |
 |----------|----------------------------------------------|
-| Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS |
+| Frontend | React 18, Vite, React Router, TypeScript, Tailwind CSS |
 | Backend  | Spring Boot 3, Spring Data JPA, Bean Validation |
 | Database | MySQL 8                                      |
 | CI/CD    | GitHub Actions → Vercel (frontend) / your host of choice (backend) |
@@ -69,12 +70,12 @@ Prerequisites: Node.js 20+.
 
 ```bash
 cd frontend
-cp .env.local.example .env.local   # points NEXT_PUBLIC_API_BASE_URL at the backend
+cp .env.local.example .env.local   # points VITE_API_BASE_URL at the backend
 npm install
 npm run dev
 ```
 
-The app starts on `http://localhost:3000`.
+The app starts on `http://localhost:5173` (Vite picks the next free port if it's taken).
 
 ## API Reference
 
@@ -85,15 +86,22 @@ The app starts on `http://localhost:3000`.
 | POST   | `/api/jobs`        | Create a job                          |
 | PUT    | `/api/jobs/{id}`   | Update a job                          |
 | DELETE | `/api/jobs/{id}`   | Delete a job                          |
+| POST   | `/api/jobs/bulk-upload` | Create multiple jobs from an uploaded CSV file (`multipart/form-data`, field name `file`) |
 
 `type` is one of `FULL_TIME`, `PART_TIME`, `CONTRACT`, `INTERNSHIP`, `REMOTE`.
+
+### Bulk upload CSV format
+
+Columns: `title`, `company`, `location`, `type`, `description` (required), `salaryRange` (optional). One job per row; a sample template is downloadable from the "Bulk Upload" page in the app.
+
+The endpoint processes rows independently — valid rows are created, invalid rows (missing required field, unrecognized `type`) are skipped and reported in the response as `{ row, message }` with the 1-indexed CSV line number, so one bad row doesn't block the rest of the batch. Max upload size is 5MB.
 
 ## CI/CD
 
 `.github/workflows/ci-cd.yml` runs on every push/PR to `main`:
 
 1. **backend-tests** — runs the Spring Boot test suite with Maven (JDK 17, H2 in-memory DB).
-2. **frontend-build** — lints and builds the Next.js app (Node 20).
+2. **frontend-build** — lints and builds the Vite React app (Node 20).
 3. **deploy-vercel** — on push to `main`, after both jobs pass, deploys the frontend to Vercel.
 
 Required GitHub Actions secrets for deployment:
@@ -103,6 +111,8 @@ Required GitHub Actions secrets for deployment:
 | `VERCEL_TOKEN` | Vercel personal access token |
 | `VERCEL_ORG_ID` | Vercel organization/team ID |
 | `VERCEL_PROJECT_ID` | Vercel project ID |
-| `NEXT_PUBLIC_API_BASE_URL` | Public URL of the deployed backend API |
+| `VITE_API_BASE_URL` | Public URL of the deployed backend API |
+
+The frontend is a single-page app: `frontend/vercel.json` sets the build/output directory and rewrites all routes to `index.html` so client-side routes like `/jobs/5` resolve correctly on Vercel.
 
 The backend is a standard Spring Boot jar (`mvn package`) and can be deployed to any Java host (Render, Railway, Fly.io, etc.) with a MySQL add-on, using the same environment variables listed above.

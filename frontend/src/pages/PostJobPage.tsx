@@ -1,8 +1,6 @@
-"use client";
-
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createJob } from "@/lib/api";
+import { FormEvent, ReactNode, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ApiError, createJob } from "@/lib/api";
 import { JOB_TYPE_LABELS, JobType } from "@/types/job";
 
 const emptyForm = {
@@ -15,7 +13,7 @@ const emptyForm = {
 };
 
 export default function PostJobPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -33,9 +31,14 @@ export default function PostJobPage() {
 
     try {
       const job = await createJob(form);
-      router.push(`/jobs/${job.id}`);
+      navigate(`/jobs/${job.id}`);
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Failed to post job");
+      if (err instanceof ApiError) {
+        setApiError(err.message);
+        if (err.fieldErrors) setErrors(err.fieldErrors);
+      } else {
+        setApiError(err instanceof Error ? err.message : "Failed to post job");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -138,7 +141,7 @@ function Field({
 }: {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">

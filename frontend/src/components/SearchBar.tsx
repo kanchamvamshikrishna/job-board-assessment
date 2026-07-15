@@ -1,12 +1,9 @@
-"use client";
-
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "react-router-dom";
 import { FormEvent, useState } from "react";
 import { JOB_TYPE_LABELS, JobType } from "@/types/job";
 
 export default function SearchBar() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [keyword, setKeyword] = useState(searchParams.get("keyword") ?? "");
   const [location, setLocation] = useState(searchParams.get("location") ?? "");
@@ -18,7 +15,7 @@ export default function SearchBar() {
     if (keyword) params.set("keyword", keyword);
     if (location) params.set("location", location);
     if (type) params.set("type", type);
-    router.push(`/?${params.toString()}`);
+    setSearchParams(params);
   }
 
   return (

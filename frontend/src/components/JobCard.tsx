@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Job, JOB_TYPE_LABELS } from "@/types/job";
 
 function timeAgo(dateString: string): string {
@@ -13,7 +13,7 @@ function timeAgo(dateString: string): string {
 export default function JobCard({ job }: { job: Job }) {
   return (
     <Link
-      href={`/jobs/${job.id}`}
+      to={`/jobs/${job.id}`}
       className="block rounded-lg border border-gray-200 bg-white p-5 transition hover:border-brand-500 hover:shadow-md"
     >
       <div className="flex items-start justify-between">

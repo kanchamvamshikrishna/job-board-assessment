@@ -1,19 +1,24 @@
 package com.globalco.jobboard.service;
 
+import com.globalco.jobboard.dto.BulkUploadResult;
 import com.globalco.jobboard.dto.JobRequest;
 import com.globalco.jobboard.exception.JobNotFoundException;
 import com.globalco.jobboard.model.Job;
 import com.globalco.jobboard.model.JobType;
 import com.globalco.jobboard.repository.JobRepository;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,13 +32,15 @@ class JobServiceTest {
     @Mock
     private JobRepository jobRepository;
 
-    @InjectMocks
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
     private JobService jobService;
 
     private Job sampleJob;
 
     @BeforeEach
     void setUp() {
+        jobService = new JobService(jobRepository, validator);
         sampleJob = new Job("Backend Engineer", "Globalco", "Hyderabad",
                 JobType.FULL_TIME, "Build APIs", "10-15 LPA");
         sampleJob.setId(1L);
@@ -117,5 +124,31 @@ class JobServiceTest {
 
         assertThat(results).hasSize(1);
         verify(jobRepository).search("engineer", null, JobType.FULL_TIME);
+    }
+
+    @Test
+    void bulkUploadJobs_createsValidRows_andReportsInvalidRowsWithLineNumbers() {
+        AtomicLong idSeq = new AtomicLong(10);
+        when(jobRepository.save(any(Job.class))).thenAnswer(inv -> {
+            Job j = inv.getArgument(0);
+            j.setId(idSeq.incrementAndGet());
+            return j;
+        });
+
+        String csv = "title,company,location,type,description,salaryRange\n"
+                + "QA Engineer,Globalco,Hyderabad,FULL_TIME,Test the platform,8-12 LPA\n"
+                + ",Globalco,Remote,REMOTE,Missing title row,5-8 LPA\n"
+                + "DevOps Engineer,Globalco,Hyderabad,NOT_A_TYPE,Invalid type row,10-15 LPA\n";
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "jobs.csv", "text/csv", csv.getBytes(StandardCharsets.UTF_8));
+
+        BulkUploadResult result = jobService.bulkUploadJobs(file);
+
+        assertThat(result.getCreatedCount()).isEqualTo(1);
+        assertThat(result.getCreatedJobs()).extracting(Job::getTitle).containsExactly("QA Engineer");
+        assertThat(result.getErrors()).hasSize(2);
+        assertThat(result.getErrors().get(0).getRow()).isEqualTo(3);
+        assertThat(result.getErrors().get(1).getRow()).isEqualTo(4);
+        verify(jobRepository, times(1)).save(any(Job.class));
     }
 }

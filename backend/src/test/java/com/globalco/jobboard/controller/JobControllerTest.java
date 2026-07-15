@@ -1,6 +1,7 @@
 package com.globalco.jobboard.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.globalco.jobboard.dto.BulkUploadResult;
 import com.globalco.jobboard.dto.JobRequest;
 import com.globalco.jobboard.exception.JobNotFoundException;
 import com.globalco.jobboard.model.Job;
@@ -11,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -102,5 +105,30 @@ class JobControllerTest {
     void deleteJob_returns204() throws Exception {
         mockMvc.perform(delete("/api/jobs/1"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void bulkUpload_returns201_withSummary() throws Exception {
+        BulkUploadResult result = new BulkUploadResult(
+                List.of(sampleJob()),
+                List.of(new BulkUploadResult.RowError(3, "title: Title is required")));
+        when(jobService.bulkUploadJobs(any())).thenReturn(result);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "jobs.csv", "text/csv", "title,company\n".getBytes(StandardCharsets.UTF_8));
+
+        mockMvc.perform(multipart("/api/jobs/bulk-upload").file(file))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.createdCount").value(1))
+                .andExpect(jsonPath("$.errors[0].row").value(3));
+    }
+
+    @Test
+    void bulkUpload_returns400_whenFileEmpty() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "jobs.csv", "text/csv", new byte[0]);
+
+        mockMvc.perform(multipart("/api/jobs/bulk-upload").file(file))
+                .andExpect(status().isBadRequest());
     }
 }

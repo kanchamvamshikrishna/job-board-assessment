@@ -1,19 +1,48 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { fetchJob } from "@/lib/api";
-import { JOB_TYPE_LABELS } from "@/types/job";
+import { Job, JOB_TYPE_LABELS } from "@/types/job";
+import NotFoundPage from "./NotFoundPage";
 
-export default async function JobDetailsPage({ params }: { params: { id: string } }) {
-  let job;
-  try {
-    job = await fetchJob(params.id);
-  } catch {
-    notFound();
+export default function JobDetailsPage() {
+  const { id } = useParams<{ id: string }>();
+  const [job, setJob] = useState<Job | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setLoading(true);
+    setNotFound(false);
+
+    fetchJob(id)
+      .then((data) => {
+        if (!cancelled) setJob(data);
+      })
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return <p className="mt-8 text-sm text-gray-500">Loading job...</p>;
+  }
+
+  if (notFound || !job) {
+    return <NotFoundPage />;
   }
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/" className="text-sm text-brand-600 hover:underline">
+      <Link to="/" className="text-sm text-brand-600 hover:underline">
         &larr; Back to all jobs
       </Link>
 
