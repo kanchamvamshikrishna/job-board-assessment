@@ -1,19 +1,33 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import SearchBar from "@/components/SearchBar";
 import JobCard from "@/components/JobCard";
+import JobCardSkeleton from "@/components/JobCardSkeleton";
 import { fetchJobs } from "@/lib/api";
 import { Job } from "@/types/job";
 
 export default function HomePage() {
   const [searchParams] = useSearchParams();
+  const routerLocation = useLocation();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    (routerLocation.state as { message?: string } | null)?.message ?? null,
+  );
 
   const keyword = searchParams.get("keyword") ?? undefined;
   const location = searchParams.get("location") ?? undefined;
   const type = searchParams.get("type") ?? undefined;
+
+  useEffect(() => {
+    if (!successMessage) return;
+    navigate(routerLocation.pathname + routerLocation.search, { replace: true, state: {} });
+    const timer = setTimeout(() => setSuccessMessage(null), 4000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +52,12 @@ export default function HomePage() {
 
   return (
     <div>
+      {successMessage && (
+        <p className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700">
+          {successMessage}
+        </p>
+      )}
+
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-gray-900">Find your next role</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -46,7 +66,13 @@ export default function HomePage() {
       </div>
       <SearchBar />
 
-      {loading && <p className="mt-8 text-sm text-gray-500">Loading jobs...</p>}
+      {loading && (
+        <div className="mt-6 grid gap-4">
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+        </div>
+      )}
 
       {!loading && error && (
         <p className="mt-8 rounded-md bg-red-50 p-4 text-sm text-red-700">

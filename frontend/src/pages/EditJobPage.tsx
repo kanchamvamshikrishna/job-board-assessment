@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import JobForm from "@/components/JobForm";
+import JobDetailSkeleton from "@/components/JobDetailSkeleton";
 import { fetchJob, updateJob } from "@/lib/api";
 import { Job, JobFormValues } from "@/types/job";
 import NotFoundPage from "./NotFoundPage";
@@ -48,11 +49,11 @@ export default function EditJobPage() {
   async function handleSubmit(values: JobFormValues) {
     if (!id) return;
     await updateJob(id, values);
-    navigate(`/jobs/${id}`);
+    navigate(`/jobs/${id}`, { state: { message: "Job updated successfully." } });
   }
 
   if (loading) {
-    return <p className="mt-8 text-sm text-gray-500">Loading job...</p>;
+    return <JobDetailSkeleton />;
   }
 
   if (notFound || !job) {

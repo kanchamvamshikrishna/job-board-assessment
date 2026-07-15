@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { deleteJob, fetchJob } from "@/lib/api";
 import { Job, JOB_TYPE_LABELS } from "@/types/job";
+import JobDetailSkeleton from "@/components/JobDetailSkeleton";
 import NotFoundPage from "./NotFoundPage";
 
 export default function JobDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    (location.state as { message?: string } | null)?.message ?? null,
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -36,8 +41,16 @@ export default function JobDetailsPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!successMessage) return;
+    navigate(location.pathname, { replace: true, state: {} });
+    const timer = setTimeout(() => setSuccessMessage(null), 4000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (loading) {
-    return <p className="mt-8 text-sm text-gray-500">Loading job...</p>;
+    return <JobDetailSkeleton />;
   }
 
   if (notFound || !job) {
@@ -50,7 +63,7 @@ export default function JobDetailsPage() {
     setDeleteError(null);
     try {
       await deleteJob(id);
-      navigate("/");
+      navigate("/", { state: { message: "Job deleted successfully." } });
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Failed to delete job");
       setDeleting(false);
@@ -59,6 +72,12 @@ export default function JobDetailsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      {successMessage && (
+        <p className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700">
+          {successMessage}
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link to="/" className="text-sm text-brand-600 hover:underline">
           &larr; Back to all jobs
