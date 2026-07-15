@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import SearchBar from "@/components/SearchBar";
 import JobCard from "@/components/JobCard";
@@ -37,7 +37,7 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
+  const loadJobs = useCallback(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -57,6 +57,8 @@ export default function HomePage() {
       cancelled = true;
     };
   }, [keyword, location, type]);
+
+  useEffect(() => loadJobs(), [loadJobs]);
 
   return (
     <div>
@@ -91,9 +93,16 @@ export default function HomePage() {
       )}
 
       {!loading && error && (
-        <p className="mt-8 rounded-md bg-red-50 p-4 text-sm text-red-700">
-          Could not reach the job board API: {error}
-        </p>
+        <div className="mt-8 rounded-md bg-red-50 p-4">
+          <p className="text-sm text-red-700">Could not reach the job board API: {error}</p>
+          <button
+            type="button"
+            onClick={loadJobs}
+            className="mt-3 rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            Retry
+          </button>
+        </div>
       )}
 
       {!loading && !error && jobs.length === 0 && (

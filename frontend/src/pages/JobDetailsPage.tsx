@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { deleteJob, fetchJob } from "@/lib/api";
+import { ApiError, deleteJob, fetchJob } from "@/lib/api";
 import { Job, JOB_TYPE_LABELS } from "@/types/job";
 import JobDetailSkeleton from "@/components/JobDetailSkeleton";
 import NotFoundPage from "./NotFoundPage";
@@ -12,6 +12,7 @@ export default function JobDetailsPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -19,18 +20,26 @@ export default function JobDetailsPage() {
     (location.state as { message?: string } | null)?.message ?? null,
   );
 
-  useEffect(() => {
+  const loadJob = useCallback(() => {
     if (!id) return;
     let cancelled = false;
     setLoading(true);
     setNotFound(false);
+    setLoadError(null);
 
     fetchJob(id)
       .then((data) => {
         if (!cancelled) setJob(data);
       })
-      .catch(() => {
-        if (!cancelled) setNotFound(true);
+      .catch((err) => {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          setNotFound(true);
+        } else {
+          setLoadError(
+            err instanceof Error ? err.message : "Could not reach the job board API",
+          );
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -40,6 +49,8 @@ export default function JobDetailsPage() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => loadJob(), [loadJob]);
 
   useEffect(() => {
     if (!successMessage) return;
@@ -51,6 +62,23 @@ export default function JobDetailsPage() {
 
   if (loading) {
     return <JobDetailSkeleton />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <p className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+          Could not reach the job board API: {loadError}
+        </p>
+        <button
+          type="button"
+          onClick={loadJob}
+          className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (notFound || !job) {
